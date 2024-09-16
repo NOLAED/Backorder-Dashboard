@@ -1,0 +1,87 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backorder Dashboard</title>
+    <style>
+        .collapsible {
+            background-color: #c9d6e4;
+            color: black;
+            cursor: pointer;
+            padding: 10px;
+            margin-top: 5px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 15px;
+        }
+
+        .collapsible.active {
+            background-color: #c9d6e4;
+        }
+
+        .content {
+            padding: 0 18px;
+            display: none;
+            overflow: hidden;
+            background-color: #f1f1f1;
+            margin-bottom: 10px;
+        }
+
+        .module-list, .item-list {
+            list-style-type: none;
+            padding-left: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        td {
+            border-bottom: 1px solid #ddd;
+        }
+
+        /* Highlight for Partially Packing Complete */
+        .highlight {
+            background-color: yellow;
+        }
+    </style>
+</head>
+<body>
+    <h1>Backorder Dashboard</h1>
+
+    <!-- Filter Buttons -->
+    <div>
+        <button id="filterAll">All</button>
+        <button id="filterPending">Pending</button>
+        <button id="filterPartiallyPackingComplete">Partially Packing Complete</button>
+        <button id="filterCompleted">Completed</button>
+    </div>
+
+    <!-- File input for uploading Excel file -->
+    <input type="file" id="fileInput" />
+
+    <!-- Display the total number of orders -->
+    <h2>Total Orders (excluding KS WAREHOUSE): <span id="totalOrders">0</span></h2>
+
+    <!-- Collapsible list structure for schools and modules -->
+    <div id="collapsibleList"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <script src="backorder-dashboard.js"></script>
+</body>
+</html>
