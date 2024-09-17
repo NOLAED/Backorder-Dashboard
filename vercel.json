@@ -1,9 +1,13 @@
 {
-    "version": 2,
-    "builds": [
-      { "src": "index.html", "use": "@vercel/static" }
-    ],
-    "routes": [
-      { "src": "/(.*)", "dest": "/index.html" }
-    ]
-  }
+  "version": 2,
+  "builds": [
+    { "src": "api/airtable.js", "use": "@vercel/node" },
+    { "src": "index.html", "use": "@vercel/static" },
+    { "src": "backorder-dashboard.js", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/airtable", "dest": "/api/airtable.js" },
+    { "src": "/backorder-dashboard.js", "dest": "/backorder-dashboard.js" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
+}

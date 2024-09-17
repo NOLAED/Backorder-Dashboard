@@ -52,9 +52,108 @@ function processData(data) {
     const totalNonWarehouseOrders = backorderData.filter(order => order.school !== 'KS WAREHOUSE').length;
     document.getElementById('totalOrders').textContent = totalNonWarehouseOrders;
 
+    // Save data to Airtable via Vercel API
+    //saveToAirtable(backorderData);
+
     // Display all data initially
     displayCollapsibleData(filteredData);
 }
+
+function saveToAirtable(data) {
+    const batchSize = 10; // Airtable's limit of 10 records per request
+    const batches = [];
+
+    // Helper function to format date to YYYY-MM-DD
+    const formatDate = (date) => {
+        const d = new Date(date);
+        const month = '' + (d.getMonth() + 1);
+        const day = '' + d.getDate();
+        const year = d.getFullYear();
+
+        return [year, month.padStart(2, '0'), day.padStart(2, '0')].join('-');
+    };
+
+    // Split data into batches of 10 records each
+    for (let i = 0; i < data.length; i += batchSize) {
+        const batch = data.slice(i, i + batchSize).map(item => ({
+            fields: {
+                "School": item.school,
+                "Module": item.module,
+                "SKU": String(item.sku), // Ensure SKU is sent as a string
+                "Item Name": item.itemName,
+                "Quantity": String(item.quantity), // Ensure Quantity is sent as a string
+                "Reason": item.reason,
+                "Order Date": formatDate(item.orderDate), // Format date as YYYY-MM-DD
+                "Packing Status": item.packingStatus,
+                "Tracking": Number(item.tracking) // Ensure Tracking is sent as a string
+            }
+        }));
+        batches.push(batch);
+    }
+
+    // Send each batch sequentially to Airtable
+    const sendBatch = (batch) => {
+        return fetch('/api/airtable', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ records: batch }),
+        })
+        .then((response) => response.json())
+        .then((data) => {
+            if (data.error) {
+                console.error('Airtable Error:', data.error);
+            } else {
+                console.log('Batch added:', data);
+            }
+        })
+        .catch((error) => console.error('Error adding batch:', error));
+    };
+
+    // Send all batches sequentially using Promises
+    batches.reduce((promise, batch) => {
+        return promise.then(() => sendBatch(batch));
+    }, Promise.resolve())
+    .then(() => {
+        console.log('All batches sent successfully');
+    })
+    .catch((error) => {
+        console.error('Error sending batches:', error);
+    });
+}
+
+
+
+function fetchFromAirtable() {
+    fetch('/api/airtable')
+    .then((response) => response.json())
+    .then((data) => {
+        if (data && data.records && data.records.length > 0) {
+            const airtableData = data.records.map((record) => ({
+                school: record.fields['School'],
+                module: record.fields['Module'],
+                sku: record.fields['SKU'],
+                itemName: record.fields['Item Name'],
+                quantity: record.fields['Quantity'],
+                reason: record.fields['Reason'],
+                orderDate: record.fields['Order Date'],
+                packingStatus: record.fields['Packing Status'],
+            }));
+            displayCollapsibleData(airtableData);
+        } else {
+            console.log('No records found in Airtable');
+            displayCollapsibleData([]);  
+        }
+    })
+    .catch((error) => console.error('Error fetching data:', error));
+}
+
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetchFromAirtable();
+});
 
 function filterByStatus(status) {
     if (status === 'All') {
@@ -81,8 +180,11 @@ function displayCollapsibleData(data) {
         schools[order.school][order.module].push(order);
     });
 
-    // Create collapsible elements
-    for (let school in schools) {
+    // Sort school names alphabetically
+    const sortedSchools = Object.keys(schools).sort();
+
+    // Create collapsible elements in alphabetical order
+    sortedSchools.forEach(school => {
         const schoolItemCount = Object.values(schools[school]).flat().length;
 
         // Create school button
@@ -140,9 +242,9 @@ function displayCollapsibleData(data) {
                     packingStatusCell = `<td style="background-color: red;">${item.packingStatus}</td>`;
                 } else if (item.packingStatus === 'Partially Packing Complete') {
                     packingStatusCell = `<td style="background-color: yellow;">${item.packingStatus}</td>`;
-                }  else  {
+                } else {
                     packingStatusCell = `<td style="background-color: green;">${item.packingStatus}</td>`;
-                };
+                }
 
                 tr.innerHTML = `
                     <td>${item.sku}</td>
@@ -156,7 +258,7 @@ function displayCollapsibleData(data) {
                 tableBody.appendChild(tr);
             });
         }
-    }
+    });
 
     // Add collapsible functionality
     const coll = document.getElementsByClassName('collapsible');
